@@ -1,0 +1,50 @@
+pip install nltk
+
+import nltk
+
+nltk.download('punkt')
+nltk.download('wordnet')
+
+import nltk
+import random
+import string
+from nltk.corpus import wordnet
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+conversation_pairs = [
+    ["hello", ["Hi there!", "Hello!", "Hi!"]],
+    ["how are you", ["I'm doing well, thank you!", "I'm fine, thank you!", "I'm good, thank you!"]],
+    ["what is your name", ["I'm a chatbot created by OpenAI.", "You can call me Chatbot."]],
+    ["bye", ["Goodbye!", "See you later!", "Bye! Take care!"]],
+]
+
+
+lemmatizer = WordNetLemmatizer()
+
+def preprocess(sentence):
+    tokens = word_tokenize(sentence.lower())
+    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens if token not in string.punctuation]
+    return lemmatized_tokens
+
+
+def get_response(user_input):
+    preprocessed_input = preprocess(user_input)
+    for pair in conversation_pairs:
+        preprocessed_pair_question = preprocess(pair[0])
+        if set(preprocessed_input).intersection(set(preprocessed_pair_question)):
+            return random.choice(pair[1])
+    return "I don't understand. Can you rephrase?"
+
+def chatbot():
+    print("Hello! I'm a chatbot. Type 'bye' to exit.")
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "bye":
+            print("Chatbot: Goodbye!")
+            break
+        response = get_response(user_input)
+        print(f"Chatbot: {response}")
+
+if __name__ == "__main__":
+    chatbot()
