@@ -1,0 +1,87 @@
+pip install requests pandas
+
+import requests
+import pandas as pd
+import json
+
+# You need to get your own API key from Alpha Vantage
+API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'
+
+def get_stock_data(symbol):
+    """Fetch real-time stock data from Alpha Vantage."""
+    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={API_KEY}'
+    response = requests.get(url)
+    data = response.json()
+    if 'Time Series (1min)' in data:
+        return data['Time Series (1min)']
+    else:
+        return None
+
+class Portfolio:
+    def __init__(self):
+        self.stocks = {}
+
+    def add_stock(self, symbol, quantity):
+        if symbol in self.stocks:
+            self.stocks[symbol] += quantity
+        else:
+            self.stocks[symbol] = quantity
+        print(f"Added {quantity} shares of {symbol} to the portfolio.")
+
+    def remove_stock(self, symbol, quantity):
+        if symbol in self.stocks:
+            if self.stocks[symbol] > quantity:
+                self.stocks[symbol] -= quantity
+                print(f"Removed {quantity} shares of {symbol} from the portfolio.")
+            elif self.stocks[symbol] == quantity:
+                del self.stocks[symbol]
+                print(f"Removed all shares of {symbol} from the portfolio.")
+            else:
+                print(f"Cannot remove {quantity} shares of {symbol}; only {self.stocks[symbol]} shares available.")
+        else:
+            print(f"{symbol} is not in the portfolio.")
+
+    def get_portfolio_value(self):
+        total_value = 0
+        for symbol, quantity in self.stocks.items():
+            stock_data = get_stock_data(symbol)
+            if stock_data:
+                latest_time = sorted(stock_data.keys())[-1]
+                latest_price = float(stock_data[latest_time]['1. open'])
+                total_value += latest_price * quantity
+        return total_value
+
+    def display_portfolio(self):
+        for symbol, quantity in self.stocks.items():
+            stock_data = get_stock_data(symbol)
+            if stock_data:
+                latest_time = sorted(stock_data.keys())[-1]
+                latest_price = float(stock_data[latest_time]['1. open'])
+                print(f'Stock: {symbol}, Quantity: {quantity}, Latest Price: {latest_price}, Total Value: {latest_price * quantity}')
+            else:
+                print(f'Stock: {symbol}, Quantity: {quantity}, Data not available')
+
+def main():
+    portfolio = Portfolio()
+    while True:
+        action = input("Would you like to add, remove, display, or get total value of your portfolio? (add/remove/display/value/quit): ").lower()
+        if action == 'add':
+            symbol = input("Enter the stock symbol to add: ").upper()
+            quantity = int(input("Enter the quantity to add: "))
+            portfolio.add_stock(symbol, quantity)
+        elif action == 'remove':
+            symbol = input("Enter the stock symbol to remove: ").upper()
+            quantity = int(input("Enter the quantity to remove: "))
+            portfolio.remove_stock(symbol, quantity)
+        elif action == 'display':
+            portfolio.display_portfolio()
+        elif action == 'value':
+            print(f'Total Portfolio Value: {portfolio.get_portfolio_value()}')
+        elif action == 'quit':
+            break
+        else:
+            print("Invalid action. Please enter add, remove, display, value, or quit.")
+            print("................................")
+
+if __name__ == "__main__":
+    main()
